@@ -10,6 +10,9 @@
 void processCmdArgs(char* argBuffer, bool *noSound, bool *requireCD);
 void loadGameData(const char* gamePath, bool requireCD, const char* regkey);
 bool createWindow(HINSTANCE hInstance);
+LRESULT WINAPI windowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+LRESULT WINAPI windowProcFocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+LRESULT WINAPI windowProcUnfocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void init_some_vars(HWND window);
 bool initDisplayParams(int a1, bool debug, bool best, bool window, LPCSTR lpText);
 
@@ -22,12 +25,15 @@ bool gInitializedGameFunctions;
 HINSTANCE hInstance;
 float gTargetDelta;
 HWND hWndParent;
+HWND window;
+HWND gWindow;
 
 const char* root_regkey = "SOFTWARE\\LEGO Media\\Games\\Rock Raiders";
 
 enum GameFlags
 {
     GFLAG_NONE = 0x0,
+    GFLAG_FOCUS = 0x2,
     GFLAG_NM = 0x20,
     GFLAG_BEST = 0x40,
     GFLAG_WINDOW = 0x100,
@@ -300,12 +306,65 @@ void loadGameData(const char* gamePath, bool requireCD, const char* regkey)
 
 bool createWindow(HINSTANCE hInstance)
 {
-    // TODO: Implement createWindow
-    return false;
+    WNDCLASS WndClass;
+    WndClass.style = CS_DBLCLKS;
+    WndClass.lpfnWndProc = windowProc;
+    WndClass.cbClsExtra = 0;
+    WndClass.cbWndExtra = 0;
+    WndClass.hInstance = hInstance;
+    WndClass.hIcon = nullptr;
+    WndClass.hCursor = nullptr;
+    WndClass.hbrBackground = nullptr;
+    WndClass.lpszMenuName = nullptr;
+    WndClass.lpszClassName = lpClassName;
+    if (RegisterClass(&WndClass))
+    {
+        window = CreateWindowEx(WS_EX_APPWINDOW, lpClassName, nullptr, WS_POPUP | WS_SYSMENU, 0, 0, 100, 100, nullptr, nullptr, hInstance, 0);
+        if (window)
+        {
+            SetFocus(window);
+            return true;
+        } else {
+            MessageBox(nullptr, "Unable to Create Main Window", "Fatal Error", MB_OK);
+            return false;
+        }
+    } else {
+        MessageBox(nullptr, "Unable to register window class", "Fatal Error", MB_OK);
+        return false;
+    }
+}
+
+LRESULT WINAPI windowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+    if ((gGameFlags & GFLAG_FOCUS) != 0)
+        return windowProcFocused(hWnd, Msg, wParam, lParam);
+    else
+        return windowProcUnfocused(hWnd, Msg, wParam, lParam);
+}
+
+LRESULT WINAPI windowProcFocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+    // TODO: Implement windowProcFocused
+    if (Msg == WM_ACTIVATEAPP)
+    {
+        gHasFocus = wParam;
+        return 0;
+    }
+    return DefWindowProc(hWnd, Msg, wParam, lParam);
+}
+
+LRESULT WINAPI windowProcUnfocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+    // TODO: Implement windowProcUnfocused
+    return DefWindowProc(hWnd, Msg, wParam, lParam);
 }
 
 void init_some_vars(HWND window)
 {
+    // TODO: Implement init_some_vars
+
+    gWindow = window;
+
     // TODO: Implement init_some_vars
 }
 
