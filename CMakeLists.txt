@@ -8,6 +8,9 @@ set(SRC_MAIN
     registry.cpp registry.h
     input.cpp input.h
     sound.cpp sound.h
-    directdraw.cpp directdraw.h debug.cpp debug.h)
+    directdraw.cpp directdraw.h
+    debug.cpp debug.h
+
+    resource.rc)
 
 add_executable(gods98 WIN32 ${SRC_MAIN})

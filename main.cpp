@@ -50,6 +50,19 @@ enum GameFlags
 
 int gGameFlags;
 
+enum TestMode
+{
+    TESTMODE_NONE = 0x0,
+    TESTMODE_PROGRAMMER = 0x1,
+    TESTMODE_CALL = 0x2,
+};
+
+int gTestMode;
+
+int gFlags = 0;
+
+char gStartLevel[256];
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     bool noSound = false;
@@ -149,9 +162,135 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return 0;
 }
 
+char* getCmdArg(char* s1, char* s2)
+{
+    char* result;
+    unsigned int len1;
+    unsigned int len2;
+    unsigned int i;
+
+    result = s1;
+    len1 = strlen(s1) + 1;
+    len2 = strlen(s2) + 1;
+
+    if (len1 == 1 || len2 == 1)
+        return 0;
+
+    i = 0;
+    while (_strnicmp(result, s2, len2 - 1))
+    {
+        ++i;
+        ++result;
+        if (i >= len1 - 1)
+            return 0;
+    }
+
+    return result;
+}
+
 void processCmdArgs(char* argBuffer, bool *noSound, bool *requireCD)
 {
-    // TODO: Implement processCmdArgs
+    if (getCmdArg(argBuffer, "-insistOnCD"))
+        *requireCD = true;
+    if (getCmdArg(argBuffer, "-nosound"))
+        *noSound = true;
+
+    if (getCmdArg(argBuffer, "-debug"))
+        gGameFlags |= GFLAG_DEBUG;
+    if (getCmdArg(argBuffer, "-nm"))
+        gGameFlags |= GFLAG_NM;
+    if (getCmdArg(argBuffer, "-ftm"))
+        gGameFlags |= GFLAG_FTM;
+    if (getCmdArg(argBuffer, "-fvf"))
+        gGameFlags |= GFLAG_FVF;
+
+    if (getCmdArg(argBuffer, "-best"))
+        gGameFlags |= GFLAG_BEST;
+    if (getCmdArg(argBuffer, "-window"))
+        gGameFlags |= GFLAG_WINDOW;
+
+    if (getCmdArg(argBuffer, "-dualmouse"))
+        gGameFlags |= GFLAG_DUALMOUSE;
+
+    if (getCmdArg(argBuffer, "-debugcomplete"))
+        gGameFlags |= GFLAG_DEBUG_COMPLETE;
+
+    if (getCmdArg(argBuffer, "-testercall"))
+    {
+        gTestMode = TESTMODE_CALL;
+        gGameFlags |= GFLAG_TESTER_CALL;
+    }
+
+    if (getCmdArg(argBuffer, "-testlevels"))
+        gGameFlags |= GFLAG_TEST_LEVELS;
+
+    if (getCmdArg(argBuffer, "-reducesamples"))
+        gGameFlags |= GFLAG_REDUCE_SAMPLES;
+
+    if (getCmdArg(argBuffer, "-showversion"))
+        gGameFlags |= GFLAG_SHOW_VERSION;
+
+    if (getCmdArg(argBuffer, "-reduceanimation"))
+        gGameFlags |= GFLAG_REDUCE_ANIMATION;
+
+    if (getCmdArg(argBuffer, "-reducepromeshes"))
+        gGameFlags |= GFLAG_REDUCE_PROMESHES;
+
+    if (getCmdArg(argBuffer, "-reduceflics"))
+        gGameFlags |= GFLAG_REDUCE_FLICS;
+
+    if (getCmdArg(argBuffer, "-reduceimages"))
+        gGameFlags |= GFLAG_REDUCE_IMAGES;
+
+    char* startlvl = getCmdArg(argBuffer, "-startlevel");
+    if (startlvl)
+    {
+        char* v10 = startlvl + 11;
+        int v11 = 0;
+        char i;
+        for (i = startlvl[11]; i; i = *++v10)
+        {
+            if (i != ' ')
+                break;
+        }
+
+        char j;
+        for (j = *v10; j; ++v10)
+        {
+            if (j == ' ')
+                break;
+            gStartLevel[v11] = j;
+            j = v10[1];
+            ++v11;
+        }
+        gStartLevel[v11] = 0;
+        gGameFlags |= GFLAG_START_LEVEL;
+    }
+
+    char* flags = getCmdArg(argBuffer, "-flags");
+    if (flags)
+        gFlags = atoi(flags + 6);
+
+    char* fpslock = getCmdArg(argBuffer, "-fpslock");
+    if (fpslock)
+    {
+        int fps = atoi(fpslock + 8);
+        if (fps)
+            gTargetDelta = 25.0f / (double)(unsigned int)fps;
+    }
+
+    char* programmer = getCmdArg(argBuffer, "-programmer");
+    if (programmer)
+    {
+        gTestMode = atoi(programmer + 11);
+        if (!gTestMode)
+            gTestMode = TESTMODE_PROGRAMMER;
+    } else {
+        gTestMode = TESTMODE_NONE;
+    }
+
+    if (getCmdArg(argBuffer, "-cleansaves"))
+        gGameFlags |= GFLAG_CLEAN_SAVES;
 }
 
 void loadGameData(const char* gamePath, bool requireCD, const char* regkey)
