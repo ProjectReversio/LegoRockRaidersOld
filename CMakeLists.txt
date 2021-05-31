@@ -14,3 +14,4 @@ set(SRC_MAIN
     resource.rc)
 
 add_executable(gods98 WIN32 ${SRC_MAIN})
+target_link_libraries(gods98 ddraw)

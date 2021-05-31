@@ -1,6 +1,8 @@
 #include <Windows.h>
+#include <ddraw.h>
 #include <iostream>
 
+#include "resource.h"
 #include "registry.h"
 #include "input.h"
 #include "sound.h"
@@ -8,13 +10,16 @@
 #include "debug.h"
 
 void processCmdArgs(char* argBuffer, bool *noSound, bool *requireCD);
-void loadGameData(const char* gamePath, bool requireCD, const char* regkey);
+void loadGameData(const char* gamePath, bool requireCD, const char* regKey);
 bool createWindow(HINSTANCE hInstance);
 LRESULT WINAPI windowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI windowProcFocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI windowProcUnfocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void init_some_vars(HWND window);
-bool initDisplayParams(int a1, bool debug, bool best, bool window, LPCSTR lpText);
+bool initDisplayParams(bool showVideoOptions, bool debug, bool best, bool window, LPCSTR lpText);
+void addResolution(int width, int height, int depth);
+bool enumResolutions(GUID* guid, int* resCount);
+INT_PTR WINAPI DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 const char* gMutexName = "Lego Rock Raiders";
 char gGamePath[256];
@@ -27,6 +32,21 @@ float gTargetDelta;
 HWND hWndParent;
 HWND window;
 HWND gWindow;
+
+GUID* lpGUID;
+int dword_568050;
+int dword_568054;
+int dword_56805C;
+bool gFullscreen;
+int dword_5754E0;
+int resCount;
+GUID someGuid;
+int resolutionListWidth[128];
+int resolutionListHeight[128];
+int resolutionListDepth[128];
+int resolutionListCount = 0;
+int resolutionCount = 0;
+//GUID* guidList[128];
 
 const char* root_regkey = "SOFTWARE\\LEGO Media\\Games\\Rock Raiders";
 
@@ -145,7 +165,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             init_some_vars(hWndParent);
             if (initSound(noSound))
             {
-                if (initDisplayParams(1,
+                if (initDisplayParams(true,
                                       gGameFlags & GFLAG_DEBUG,
                                       gGameFlags & GFLAG_BEST,
                                       gGameFlags & GFLAG_WINDOW,
@@ -361,6 +381,9 @@ LRESULT WINAPI windowProcUnfocused(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lP
 
 void init_some_vars(HWND window)
 {
+    resolutionCount = 0;
+    //guidList[0] = nullptr;
+
     // TODO: Implement init_some_vars
 
     gWindow = window;
@@ -368,9 +391,87 @@ void init_some_vars(HWND window)
     // TODO: Implement init_some_vars
 }
 
-bool initDisplayParams(int a1, bool debug, bool best, bool window, LPCSTR lpText)
+bool initDisplayParams(bool showVideoOptions, bool debug, bool best, bool window, LPCSTR lpText)
 {
+    int v5 = 0;
+    INT_PTR v13 = 1;
+    lpGUID = nullptr;
+    dword_568050 = 0;
+    dword_568054 = 0;
+    dword_56805C = 1;
+    gFullscreen = true;
+    dword_5754E0 = 0;
+    addResolution(640, 480, 16);
+    if (debug)
+    {
+        addResolution(800, 600, 16);
+        addResolution(1024, 768, 16);
+    }
+
+    enumResolutions(&someGuid, &resCount);
+    if (!resCount)
+        return false;
+    lpGUID = &someGuid;
+    if (!best)
+    {
+        if (showVideoOptions)
+            v13 = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), ::window, DialogFunc, 0);
+        goto LABEL_24;
+    }
+    int v6 = 0;
+    int v7 = resCount - 1;
+    v13 = 1;
+    gFullscreen = !window;
+    if (resCount - 1 < 0)
+    {
+LABEL_20:
+        if (!v6)
+        {
+            MessageBox(nullptr, lpText, "Error", MB_OK);
+            return false;
+        }
+LABEL_24:
+        if (v13 == 1)
+        {
+            // TODO: Implement initDisplayParams
+        }
+        return false;
+    }
+
     // TODO: Implement initDisplayParams
 
+    MessageBox(nullptr, "Please install DirectX version 6 or later", "Error", MB_OK);
     return false;
+}
+
+void addResolution(int width, int height, int depth)
+{
+    resolutionListWidth[resolutionListCount] = width;
+    resolutionListHeight[resolutionListCount] = height;
+    resolutionListDepth[resolutionListCount] = depth;
+    resolutionListCount++;
+}
+
+BOOL WINAPI EnumResCallback(GUID* guid, LPSTR a2, LPSTR a3, LPVOID a4)
+{
+    // TODO: Implement EnumResCallback properly
+    //guidList[resolutionCount] = guid;
+    resolutionCount++;
+
+    return 0;
+}
+
+bool enumResolutions(GUID* guid, int* resCount)
+{
+    //guidList[0] = guid;
+    DirectDrawEnumerate(EnumResCallback, nullptr);
+    *resCount = resolutionCount;
+
+    return true;
+}
+
+INT_PTR WINAPI DialogFunc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+    // TODO: Implement DialogFunc
+    return 0;
 }
